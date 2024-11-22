@@ -1,13 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm 
 
 
 # Constants
 
 crossSectionAbsorp = 0.2 # Définition d'une valeur pour la cross Section d'absorption pas tenir compte des dimensions pour l'instant 
 crossSectionScatter = 0.8 # Même chose pour la cross Section de diffusion
-numberPoints = 1000 # Nombre de neutrons envoyé
-thicknessWall = 1.5 # Épaisseur de la paroi
+numberPoints = 10000 # Nombre de neutrons envoyé
+thicknessWall = 6.0 # Épaisseur de la paroi
 
 pos = np.zeros((numberPoints, 2)) # Position initiale des neutrons
 direction = np.zeros((numberPoints, 2)) # Direction initiale des neutrons
@@ -21,7 +22,7 @@ numberPointsBackScatter = 0 # Nombre de neutrons qui sont devant le mur
 while numberAbsorp < numberPoints: # Tant que tous les neutrons n'ont pas été absorbés ou sont sorties du mur
     i = 0
     while i < numberPoints: # On vérifie pour tous les neutrons
-        if np.all(direction[i, :] == 0): # En gros quand un neutron est absorbé sort du mur ou est absorbé il est désactivé ce qui revient à lui donner une direction nulle et de le skipp dés qu'on le croise '
+        if np.all(direction[i, :] == 0): # En gros quand un neutron est absorbé ou est sortie du mur il est désactivé ce qui revient à lui donner une direction nulle et de le skipp dés qu'on le croise 
             i += 1
             continue
         ethaAbsorp = np.random.uniform(0, 1, 1) # Génération d'un nombre aléatoire entre 0 et 1
@@ -65,18 +66,10 @@ print('Number of points: ', numberPoints)
 print('Number of points outside: ', numberPointsOutside)
 print('Number of points backscattered: ', numberPointsBackScatter)
 
-# Step 2 - Draw it's free flight
-
-# Step 3 - Draw the type of collision
-
-# Step 4 - Deal with next n in memory (if appropriate) and go to 2
-
-# Step 5 - Go to 1 if there are still runs to play
-
 x_limits = (thicknessWall - thicknessWall*1.5, thicknessWall*1.5)
 y_limits = (-thicknessWall*1.5, thicknessWall*1.5)
 
-plt.hist2d(pos[:, 0], pos[:, 1], bins=100, range=[x_limits, y_limits], cmap='viridis')
+plt.hist2d(pos[:, 0], pos[:, 1], bins=100, range=[x_limits, y_limits], cmap='viridis', norm=LogNorm())
 plt.colorbar(label='Densité des points')
 
 
