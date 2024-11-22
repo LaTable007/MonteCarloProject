@@ -7,7 +7,7 @@ from matplotlib.colors import LogNorm
 
 crossSectionAbsorp = 0.2 # Définition d'une valeur pour la cross Section d'absorption pas tenir compte des dimensions pour l'instant 
 crossSectionScatter = 0.8 # Même chose pour la cross Section de diffusion
-numberPoints = 10000 # Nombre de neutrons envoyé
+numberPoints = 100000 # Nombre de neutrons envoyé
 thicknessWall = 6.0 # Épaisseur de la paroi
 
 pos = np.zeros((numberPoints, 2)) # Position initiale des neutrons
@@ -78,5 +78,7 @@ plt.axvline(x=thicknessWall, color='red', linestyle='--', linewidth=2, label='Fi
 
 plt.xlabel('Position en X')
 plt.ylabel('Position en Y')
-plt.title('Répartition des points dans le plan')
+plt.title(f'Nombre de points: {numberPoints}, \n'
+          f'Nombre de points derrière le mur: {numberPointsOutside}, \n'
+          f'Nombre de points devant le mur: {numberPointsBackScatter}')
 plt.show()
