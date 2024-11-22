@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 # Constants
 
 crossSection = 1
-direction = np.array([1, 0])
+direction = np.array([1, 0, 0])
 numberPoints = 100000
 
 # Step 1 - Draw the initial coordinates and speed of the n from the source density
 
-pos = np.zeros((numberPoints, 2))
+pos = np.zeros((numberPoints, 3))
 
 i = 0
 
