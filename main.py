@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm 
 from utils import printProgressBar
+import time
+
+# Start measuring time
+start_time = time.time()
 
 
 # Constants
@@ -10,11 +14,14 @@ crossSectionAbsorp = 1 # Définition d'une valeur pour la cross Section d'absorp
 crossSectionScatter = 67 # Même chose pour la diffusion
 numberPoints = 100000 # Nombre de neutrons envoyé
 thicknessWall = 0.2 # Épaisseur de la paroi
+energy_threshold = 0.05  # Energy threshold for Russian roulette
+survival_probability = 0.5  # Probability of surviving the roulette
 
 pos = np.zeros((numberPoints, 2)) # Position initiale des neutrons
 direction = np.zeros((numberPoints, 2)) # Direction initiale des neutrons
 direction[:, 0] = 1
 
+neutron_energy = np.ones(numberPoints)  # Initial energy of each neutron
 active_neutron = True
 
 numberAbsorp = 0 # Nombre de neutrons absorbés ou qui sont sortie du mur
@@ -65,6 +72,14 @@ for i in range(numberPoints):
             theta = np.random.uniform(0, 2 * np.pi)
             direction[i, :] = [np.cos(theta), np.sin(theta)]
             distances_scatter.append(sampleScatter)  # Enregistre la distance avant diffusion
+            neutron_energy[i] *= 0.9 #exemple : energie multiplié par 0,9
+            # Check for Russian roulette
+            if neutron_energy[i] < energy_threshold:
+                if np.random.uniform(0, 1) > survival_probability:
+                    active_neutron = False  # Neutron is "killed"
+                else:
+                    neutron_energy[i] /= survival_probability  # Adjust weight to maintain unbiased result
+
     printProgressBar(i, numberPoints, prefix='Progress:', suffix='Complete', decimals = 3,length=50)
 
 # Calculate the standard deviation of the x position
@@ -98,3 +113,10 @@ plt.title(f'Nombre de points: {numberPoints}, \n'
           f'Nombre de points derrière le mur: {numberPointsOutside}, \n'
           f'Nombre de points devant le mur: {numberPointsBackScatter}')
 plt.show()
+
+# End measuring time
+end_time = time.time()
+
+# Print execution time
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time:.2f} seconds")
