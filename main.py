@@ -5,6 +5,8 @@ from utils import printProgressBar
 
 
 # Constants
+seed = 1
+np.random.seed(seed)
 
 crossSectionAbsorp = 1 # Définition d'une valeur pour la cross Section d'absorption
 crossSectionScatter = 67 # Même chose pour la diffusion
@@ -28,43 +30,78 @@ distances_scatter = []  # Pour stocker les distances avant diffusion
 neutron_population = np.zeros(numberPoints)
 j = 0
 
-for i in range(numberPoints):
-    active_neutron = True
-    while active_neutron:
-        ethaAbsorp = np.random.uniform(0, 1)
-        ethaScatter = np.random.uniform(0, 1)
+for i in range(0, numberPoints, 2):
+    active_neutron_pair = [True, True]
+    while active_neutron_pair[0] or active_neutron_pair[1]:
+        ethaAbsorp = np.random.uniform(0, 1, 2)
+        ethaScatter = np.random.uniform(0, 1, 2)
+
+        ethaAbsorp[1] = 1 - ethaAbsorp[0]
+        ethaScatter[1] = 1 - ethaScatter[0]
     
         sampleAbsorp = -np.log(ethaAbsorp) / crossSectionAbsorp
         sampleScatter = -np.log(ethaScatter) / crossSectionScatter
-
-        if pos[i, 0] > thicknessWall:
-            numberPointsOutside += 1
-            active_neutron = False
-            neutron_population[j] = 1
-            j += 1
-            break
-
-        if pos[i, 0] < 0:
-            numberPointsBackScatter += 1
-            active_neutron = False
-            neutron_population[j] = 0
-            j += 1
-            break
         
-        if sampleAbsorp < sampleScatter:
-            pos[i, :] += sampleAbsorp * direction[i, :]
-            active_neutron = False
-            distances_absorp.append(sampleAbsorp)  # Enregistre la distance avant absorption
-            numberAbsorp += 1
-            neutron_population[j] = 0
-            j += 1
-            break
+        if active_neutron_pair[0]:
+            if pos[i, 0] > thicknessWall:
+                numberPointsOutside += 1
+                active_neutron_pair[0] = False
+                neutron_population[j] = 1
+                j += 1
+                break
+
+            if pos[i, 0] < 0:
+                numberPointsBackScatter += 1
+                active_neutron_pair[0] = False
+                neutron_population[j] = 0
+                j += 1
+                break
         
-        else:
-            pos[i, :] += sampleScatter * direction[i, :]
-            theta = np.random.uniform(0, 2 * np.pi)
-            direction[i, :] = [np.cos(theta), np.sin(theta)]
-            distances_scatter.append(sampleScatter)  # Enregistre la distance avant diffusion
+            if sampleAbsorp[0] < sampleScatter[0]:
+                pos[i, :] += sampleAbsorp[0] * direction[i, :]
+                active_neutron_pair[0] = False
+                distances_absorp.append(sampleAbsorp)  # Enregistre la distance avant absorption
+                numberAbsorp += 1
+                neutron_population[j] = 0
+                j += 1
+                break
+        
+            else:
+                pos[i, :] += sampleScatter[0] * direction[i, :]
+                theta = np.random.uniform(0, 2 * np.pi)
+                direction[i, :] = [np.cos(theta), np.sin(theta)]
+                distances_scatter.append(sampleScatter)  # Enregistre la distance avant diffusion
+
+        if active_neutron_pair[1]:
+            if pos[i+1, 0] > thicknessWall:
+                numberPointsOutside += 1
+                active_neutron_pair[1] = False
+                neutron_population[j] = 1
+                j += 1
+                break
+
+            if pos[i+1, 0] < 0:
+                numberPointsBackScatter += 1
+                active_neutron_pair[1] = False
+                neutron_population[j] = 0
+                j += 1
+                break
+
+            if sampleAbsorp[1] < sampleScatter[1]:
+                pos[i+1, :] += sampleAbsorp[1] * direction[i+1, :]
+                active_neutron_pair[1] = False
+                distances_absorp.append(sampleAbsorp)
+                numberAbsorp += 1
+                neutron_population[j] = 0
+                j += 1
+                break
+
+            else:
+                pos[i+1, :] += sampleScatter[1] * direction[i+1, :]
+                theta = np.random.uniform(0, 2 * np.pi)
+                direction[i+1, :] = [np.cos(theta), np.sin(theta)]
+                distances_scatter.append(sampleScatter)
+
     printProgressBar(i, numberPoints, prefix='Progress:', suffix='Complete', decimals = 3,length=50)
 
 # Calculate the standard deviation of the x position
