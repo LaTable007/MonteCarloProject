@@ -5,6 +5,8 @@ from utils import printProgressBar
 
 
 # Constants
+seed = 1
+np.random.seed(seed)
 
 crossSectionAbsorp = 1 # Définition d'une valeur pour la cross Section d'absorption
 crossSectionScatter = 67 # Même chose pour la diffusion
