@@ -26,7 +26,13 @@ numberPointsBackScatter = 0  # Nombre de neutrons qui sont devant le mur
 distances_absorp = []  # Pour stocker les distances avant absorption
 distances_scatter = []  # Pour stocker les distances avant diffusion
 
-wallData = [[67, 1, 0, 0.05],[42,3 , 0.05, thicknessWall]]
+wallData = [[67, 0.01, 0, 0.05],[42,3 , 0.05, thicknessWall]]
+xlayer = []
+for layer in wallData:
+    print(layer)
+    xlayer += [layer[2]]
+xlayer += [thicknessWall]
+
 
 
 
@@ -55,13 +61,13 @@ for i in range(numberPoints):
         sampleTransport = -np.log(ethaTransport) / totalCrossSection
 
         pos[i, :] += sampleTransport*direction[i, :]
+        layer = 0
+        for j in range(len(wallData)):
+            if wallData[j][2] <= pos[i, 0] < wallData[j][3]:
+                layer = j
+                break
 
-        for wall in wallData:
-            if wall[2] <= pos[i, 0] < wall[3]:
-                w = wallData.index(wall)
-        scattering = collisionSample(crossSectionScatter, crossSectionAbsorp)
-
-
+        scattering = collisionSample(wallData[layer][0], wallData[layer][1])
         if scattering :
             theta = np.random.uniform(0, 2 * np.pi)
             direction[i, :] = [np.cos(theta), np.sin(theta)]
