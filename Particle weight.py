@@ -95,7 +95,7 @@ for i in range(numberPoints):
 
             # Russian roulette
             if neutron_weight[i] < weight_threshold:
-                if np.random.uniform(0, 1) > survival_probability:
+                if np.random.uniform(0, 1) > weight_threshold:
                     active_neutron = False  # Le neutron est tué
                 else:
                     neutron_weight[i] /= survival_probability  # Augmente le poids du neutron qui a survécu
