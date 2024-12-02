@@ -10,7 +10,7 @@ np.random.seed(seed)
 
 crossSectionAbsorp = 1 # Définition d'une valeur pour la cross Section d'absorption
 crossSectionScatter = 67 # Même chose pour la diffusion
-numberPoints = 2 # Nombre de neutrons envoyé
+numberPoints = 100000 # Nombre de neutrons envoyé
 thicknessWall = 0.2 # Épaisseur de la paroi
 totalCrossSection = crossSectionScatter + crossSectionAbsorp
 
@@ -31,6 +31,7 @@ j = 0
 
 def collisionSample(sigmaS, sigmaA):
     etha1 = np.random.uniform(0, 1)
+    #etha2 = 1 - etha1 
     etha2 = np.random.uniform(0, 1)
     x = [False, False]
     if etha1 < sigmaS/(sigmaA + sigmaS) : x[0] = True
@@ -78,7 +79,8 @@ for i in range(0, numberPoints, 2):
 
         sampleTransport = -np.log(ethaTransport) / (totalCrossSection)
 
-        pos[i, :] += sampleTransport*direction[i, :]
+        pos[i, :] += sampleTransport[0]*direction[i, :]
+        pos[i+1, :] += sampleTransport[1]*direction[i+1, :]
 
         scattering = collisionSample(crossSectionScatter, crossSectionAbsorp)
 
