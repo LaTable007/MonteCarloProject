@@ -93,7 +93,7 @@ while len(pos) != 0:
         layer =  FindLayer(pos[i])
         ethaTransport = random.uniform(0, 1)
         sampleTransport = -log(ethaTransport) /(wallData[layer][0] + wallData[layer][1])
-        print(sampleTransport)
+        #print(sampleTransport)
         pos[i][0] += sampleTransport * direction[i][0]
         pos[i][1] +=  sampleTransport * direction[i][1]
         if pos[i][0] < 0 :
@@ -108,15 +108,15 @@ while len(pos) != 0:
         else :
             justsplitted = False
             #print(pos[i][0], pos[i][0] >= thicknessWall - near_boundary_margin)
-#            if pos[i][0] >= thicknessWall - near_boundary_margin and not splitted[i]:
-#                numberSplits += 1
-#                justsplitted = True
-#                for _ in range(split_factor):
-#                    npos.append([pos[i][0], pos[i][1]])
-#                    ndirection.append([direction[i][0], direction[i][1]])
-#                    nsplitted.append(True)
+            if pos[i][0] >= thicknessWall - near_boundary_margin and not splitted[i]:
+                numberSplits += 1
+                justsplitted = True
+                for _ in range(split_factor):
+                    npos.append([pos[i][0], pos[i][1]])
+                    ndirection.append([direction[i][0], direction[i][1]])
+                    nsplitted.append(True)
                     #print(weight[i]/split_factor)
-#                    nweight.append(weight[i]/split_factor)
+                    nweight.append(weight[i]/split_factor)
 
             layer = FindLayer(pos[i])
             scattering = collisionSample(wallData[layer][0], wallData[layer][1])
@@ -145,8 +145,8 @@ while len(pos) != 0:
     splitted = nsplitted
     weight = nweight
 
-#print(numberPointsOutside + numberAbsorp + numberPointsBackScatter)
-#print(numberSplits)
+print(numberPointsOutside + numberAbsorp + numberPointsBackScatter)
+print(numberSplits)
 #print(len(finalpos))
 print(VarianceData[-1])
 #print(MeanData[-1])
@@ -159,55 +159,6 @@ print(VarianceData[-1])
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-"""
-for i in range(numberPoints):
-    active_neutron = True
-    while active_neutron:
-
-        if pos[i, 0] > thicknessWall:
-            numberPointsOutside += 1
-            active_neutron = False
-            break
-
-        if pos[i, 0] < 0:
-            numberPointsBackScatter += 1
-            active_neutron = False
-            break
-
-        ethaTransport = random.uniform(0, 1)
-        sampleTransport = -np.log(ethaTransport) / totalCrossSection
-
-        pos[i, :] += sampleTransport*direction[i, :]
-        layer = 0
-        for j in range(len(wallData)):
-            if wallData[j][2] <= pos[i, 0] < wallData[j][3]:
-                layer = j
-                break
-
-        scattering = collisionSample(wallData[layer][0], wallData[layer][1])
-        if scattering :
-            theta = np.random.uniform(0, 2 * np.pi)
-            direction[i, :] = [np.cos(theta), np.sin(theta)]
-            distances_scatter.append(sampleTransport)
-
-        else :
-            active_neutron = False
-            distances_absorp.append(sampleTransport)  # Enregistre la distance avant absorption
-            numberAbsorp += 1
-
-    printProgressBar(i, numberPoints, prefix='Progress:', suffix='Complete', decimals=3, length=50)
-"""
 
 
 print('Number of points: ', numberPoints)
