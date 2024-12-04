@@ -93,7 +93,7 @@ def ErrorEstimation(ScatteredWeights, numberPoints, numberPointsTransmitted):
     return (var/numberPoints)**(1/2)
 
 
-numberPoints = 1000
+numberPoints = 0
 ThicknessWall = 0.1
 ACrossSection = 1
 SCrossSection = 67
