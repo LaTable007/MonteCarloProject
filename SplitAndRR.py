@@ -44,9 +44,20 @@ def ProbabilitySplittingTransmission(thicknessWall, AbsorpCrossSection, Scatteri
                     numberPointsTransmitted += weight[i]
 
                 else :
-                    #On détermine si un neutron doit être splitté
+                    # échantillonage du collision kernel
                     justsplitted = False
-                    if pos[i][0] >= thicknessWall - near_boundary_margin:
+                    scattering = collisionSample(ScatteringCrossSection, AbsorpCrossSection)
+                    if scattering:
+                        # détermination direction en sortie de la collision
+
+                        theta = np.random.uniform(0, 2 * np.pi)
+                        direction[i][0] = cos(theta)
+
+                    else:
+                        #compte le nombre de neutrons absorbés dans le mur
+                        numberPointsAbsorbed += weight[i]
+                    #On détermine si un neutron doit être splitté
+                    if pos[i][0] >= thicknessWall - near_boundary_margin and scattering:
 
                         numberSplits += 1
                         justsplitted = True   # Élimine le neutron qu'on va splitter
@@ -59,27 +70,12 @@ def ProbabilitySplittingTransmission(thicknessWall, AbsorpCrossSection, Scatteri
                             nweight.append(weight[i] / split_factor) #le poids du neutron au compteur est réduit par le nombre de neutrons créés
 
 
-                    # échantillonage du collision kernel
-                    scattering = collisionSample(ScatteringCrossSection, AbsorpCrossSection)
-
-
-                    if scattering and not justsplitted:
-                        # détermination direction en sortie de la collision
-
-                        theta = np.random.uniform(0, 2 * np.pi)
-                        direction[i][0] = cos(theta)
-
-
-                        #neutrons qui survivent à ce cycle et qui restent dans le mur
+                    if not justsplitted and scattering:
+                        # neutrons qui survivent à ce cycle et qui restent dans le mur
                         npos.append(pos[i])
                         ndirection.append(direction[i])
                         nsplitted.append(splitted[i])
                         nweight.append(weight[i])
-
-                    else:
-                        #compte le nombre de neutrons absorbés dans le mur
-                        if not justsplitted:    # exclut le neutron splitté qui doit disparaitre
-                            numberPointsAbsorbed += weight[i]
 
         pos = npos[:]
         direction = ndirection[:]

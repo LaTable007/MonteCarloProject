@@ -4,9 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def TransportSampling(TotalCrossSection):
+
+
+def TransportSampling(TotalCrossSection, randompoint):
     etha = random.uniform(0, 1)
-    return -log(etha)/TotalCrossSection
+    #return -log(etha)/TotalCrossSection
+    return -np.log(randompoint)/TotalCrossSection
 
 def collisionSample(sigmaS, sigmaA):
     etha = random.uniform(0, 1)
@@ -44,7 +47,8 @@ def ProbabilityTransmission(thicknessWall, AbsorpCrossSection, ScatteringCrossSe
 
         for i in range(len(pos)):
             # echantillonage du transport kernel
-            SampleTransport = TransportSampling(AbsorpCrossSection + ScatteringCrossSection)
+            randompoint = random.uniform(0, 1)
+            SampleTransport = TransportSampling(AbsorpCrossSection + ScatteringCrossSection, randompoint)
             pos[i][0] += SampleTransport * direction[i][0]
 
             # On verifie si neutron sort du mur
