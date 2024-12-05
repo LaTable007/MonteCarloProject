@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import random
 import time
+import os
 
 ALLELE_POOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !.,?"
-TARGET_SOLUTION = "Hellow World!"
+TARGET_SOLUTION = "Hello World!"
 
 
 
@@ -173,26 +174,45 @@ class GeneticAlgorithm():
         return generation, population[0].fitness, population[0].get_chromosome()
 
 
+os.system('mkdir -p plots')
+
 # Liste des tailles de population à tester
 population_sizes = [10, 20, 30, 40, 50, 60, 70 , 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 generations_needed = []
 execution_times = []
 
+# Liste des seeds
+num_seeds = 40
+seeds = list(range(num_seeds))
+
 # Tester chaque taille de population
 for pop_size in population_sizes:
-    ga = GeneticAlgorithm(pop_size=pop_size)
+    generations_accumulated = []
+    execution_times_accumulated = []
+
+    # Exécuter pour chaque seed
+    for seed in seeds:
+        ga = GeneticAlgorithm(pop_size=pop_size)
+
+        # Mesurer le temps d'exécution
+        start_time = time.time()
+        generations, fitness, chromosome = ga.run_genetic_algorithm(
+            seed=seed, 
+            tol=len(TARGET_SOLUTION), 
+            display=False  # Désactiver l'affichage pour les tests multiples
+        )
+        end_time = time.time()
+        
+        # Accumuler les résultats
+        generations_accumulated.append(generations)
+        execution_times_accumulated.append(end_time - start_time)
     
-    # Mesurer le temps d'exécution
-    start_time = time.time()
-    generations, fitness, chromosome = ga.run_genetic_algorithm(
-        seed=1, 
-        tol=len(TARGET_SOLUTION), 
-        display=False  # On désactive l'affichage pour les tests multiples
-    )
-    end_time = time.time()
+    # Moyenne sur les seeds
+    avg_generations = sum(generations_accumulated) / len(seeds)
+    avg_execution_time = sum(execution_times_accumulated) / len(seeds)
     
-    generations_needed.append(generations)
-    execution_times.append(end_time - start_time)
+    generations_needed.append(avg_generations)
+    execution_times.append(avg_execution_time)
 
 # Tracer le graphique
 fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -212,10 +232,10 @@ ax2.plot(population_sizes, execution_times, marker='o', linestyle='--', color=co
 ax2.tick_params(axis='y', labelcolor=color2)
 
 # Titre et légendes
-fig.suptitle("Impact de la taille de la population sur la convergence et le temps d'exécution")
+fig.suptitle("Impact de la taille de la population sur la convergence et le temps d'exécution (moyenne sur 10 seeds)")
 fig.tight_layout()
 plt.grid(True, which='both', axis='both', linestyle='--', alpha=0.5)
-plt.show()
+plt.savefig('plots/population_size_{}_{}_seeds.png'.format(TARGET_SOLUTION, num_seeds))
 
 
 # Ratios de mating pool à tester
@@ -225,17 +245,32 @@ execution_times = []
 
 # Tester chaque ratio
 for ratio in mating_pool_ratios:
-    ga = GeneticAlgorithm(pop_size=500, pm=0.01, elitism=0.05)
-    start_time = time.time()
-    generations, fitness, chromosome = ga.run_genetic_algorithm(
-        seed=1, 
-        tol=len(TARGET_SOLUTION), 
-        display=False, 
-        mating_pool_size_ratio=ratio
-    )
-    end_time = time.time()
-    generations_needed.append(generations)
-    execution_times.append(end_time - start_time)
+    generations_accumulated = []
+    execution_times_accumulated = []
+    
+    for seed in seeds:
+        ga = GeneticAlgorithm(pop_size=500, pm=0.01, elitism=0.05)
+        
+        # Mesurer le temps d'exécution
+        start_time = time.time()
+        generations, fitness, chromosome = ga.run_genetic_algorithm(
+            seed=seed, 
+            tol=len(TARGET_SOLUTION), 
+            display=False, 
+            mating_pool_size_ratio=ratio
+        )
+        end_time = time.time()
+        
+        # Accumuler les résultats
+        generations_accumulated.append(generations)
+        execution_times_accumulated.append(end_time - start_time)
+    
+    # Moyenne sur les seeds
+    avg_generations = sum(generations_accumulated) / len(seeds)
+    avg_execution_time = sum(execution_times_accumulated) / len(seeds)
+    
+    generations_needed.append(avg_generations)
+    execution_times.append(avg_execution_time)
 
 # Tracer le graphique
 fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -258,26 +293,42 @@ ax2.tick_params(axis='y', labelcolor=color2)
 fig.suptitle("Impact de la taille de la mating pool sur la convergence et le temps d'exécution")
 fig.tight_layout()
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
-plt.show()
+plt.savefig('plots/mating_pool_size_{}_{}_seeds.png'.format(TARGET_SOLUTION, num_seeds))
 
 
 # Taux de mutation à tester
-mutation_rates = [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.011, 0.012, 0.013, 0.013, 0.015, 0.016, 0.017, 0.018, 0.019, 0.020]
+mutation_rates = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.2]
 generations_needed = []
 execution_times = []
 
 # Tester chaque taux de mutation
 for pm in mutation_rates:
-    ga = GeneticAlgorithm(pop_size=500, pm=pm, elitism=0.05)
-    start_time = time.time()
-    generations, fitness, chromosome = ga.run_genetic_algorithm(
-        seed=1, 
-        tol=len(TARGET_SOLUTION), 
-        display=False
-    )
-    end_time = time.time()
-    generations_needed.append(generations)
-    execution_times.append(end_time - start_time)
+    generations_accumulated = []
+    execution_times_accumulated = []
+    
+    for seed in seeds:
+        ga = GeneticAlgorithm(pop_size=500, pm=pm, elitism=0.05)
+        
+        # Mesurer le temps d'exécution
+        start_time = time.time()
+        generations, fitness, chromosome = ga.run_genetic_algorithm(
+            seed=seed, 
+            tol=len(TARGET_SOLUTION), 
+            display=False
+        )
+        end_time = time.time()
+        
+        # Accumuler les résultats
+        generations_accumulated.append(generations)
+        execution_times_accumulated.append(end_time - start_time)
+    
+    # Moyenne sur les seeds
+    avg_generations = sum(generations_accumulated) / len(seeds)
+    avg_execution_time = sum(execution_times_accumulated) / len(seeds)
+    
+    generations_needed.append(avg_generations)
+    execution_times.append(avg_execution_time)
+
 
 # Tracer le graphique
 fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -285,6 +336,7 @@ fig, ax1 = plt.subplots(figsize=(10, 6))
 # Premier axe : nombre de générations
 color1 = 'tab:blue'
 ax1.set_xlabel("Taux de mutation")
+ax1.set_xscale("log")  # Échelle logarithmique pour l'axe x
 ax1.set_ylabel("Nombre de générations nécessaires", color=color1)
 ax1.plot(mutation_rates, generations_needed, marker='o', linestyle='-', color=color1, label="Nombre de générations")
 ax1.tick_params(axis='y', labelcolor=color1)
@@ -300,25 +352,41 @@ ax2.tick_params(axis='y', labelcolor=color2)
 fig.suptitle("Impact du taux de mutation sur la convergence et le temps d'exécution")
 fig.tight_layout()
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
-plt.show()
+plt.savefig('plots/mutation_rate_{}_{}_seeds.png'.format(TARGET_SOLUTION, num_seeds))
+
 
 # Taux d'élitisme à tester
-elitism_rates = [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.2]
+elitism_rates = [0.002, 0.01, 0.02, 0.04, 0.1, 0.2, 0.5]
 generations_needed = []
 execution_times = []
 
 # Tester chaque taux d'élitisme
 for elitism in elitism_rates:
-    ga = GeneticAlgorithm(pop_size=500, pm=0.01, elitism=elitism)
-    start_time = time.time()
-    generations, fitness, chromosome = ga.run_genetic_algorithm(
-        seed=1, 
-        tol=len(TARGET_SOLUTION), 
-        display=False
-    )
-    end_time = time.time()
-    generations_needed.append(generations)
-    execution_times.append(end_time - start_time)
+    generations_accumulated = []
+    execution_times_accumulated = []
+    
+    for seed in seeds:
+        ga = GeneticAlgorithm(pop_size=500, pm=0.01, elitism=elitism)
+        
+        # Mesurer le temps d'exécution
+        start_time = time.time()
+        generations, fitness, chromosome = ga.run_genetic_algorithm(
+            seed=seed, 
+            tol=len(TARGET_SOLUTION), 
+            display=False
+        )
+        end_time = time.time()
+        
+        # Accumuler les résultats
+        generations_accumulated.append(generations)
+        execution_times_accumulated.append(end_time - start_time)
+    
+    # Moyenne sur les seeds
+    avg_generations = sum(generations_accumulated) / len(seeds)
+    avg_execution_time = sum(execution_times_accumulated) / len(seeds)
+    
+    generations_needed.append(avg_generations)
+    execution_times.append(avg_execution_time)
 
 # Tracer le graphique
 fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -326,6 +394,7 @@ fig, ax1 = plt.subplots(figsize=(10, 6))
 # Premier axe : nombre de générations
 color1 = 'tab:blue'
 ax1.set_xlabel("Taux d'élitisme")
+ax1.set_xscale("log")  # Échelle logarithmique pour l'axe x
 ax1.set_ylabel("Nombre de générations nécessaires", color=color1)
 ax1.plot(elitism_rates, generations_needed, marker='o', linestyle='-', color=color1, label="Nombre de générations")
 ax1.tick_params(axis='y', labelcolor=color1)
@@ -341,4 +410,5 @@ ax2.tick_params(axis='y', labelcolor=color2)
 fig.suptitle("Impact du taux d'élitisme sur la convergence et le temps d'exécution")
 fig.tight_layout()
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
-plt.show()
+plt.savefig('plots/elitism_rate_{}_{}_seeds.png'.format(TARGET_SOLUTION, num_seeds))
+
