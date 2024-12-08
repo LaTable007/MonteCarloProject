@@ -4,7 +4,7 @@ from CommonFunctions import InitNeutronPop, collisionSample, TransportSampling, 
 import random
 from math import cos
 
-MaxDeviation = 20
+MaxDeviation = 1
 
 def meanValue(pos, wallData, Interaction):
     layer = FindLayer(pos, wallData)
@@ -17,7 +17,6 @@ def StandardDeviation(pos, wallData):
         b = - MaxDeviation * (wallData[layer][3] + wallData[layer][2]) / (wallData[layer][3] - wallData[layer][2])
         sigma = a*pos[0] + b
     else :
-        print("AAAAA")
         a =  2 * MaxDeviation /(wallData[layer][2] - wallData[layer][3])
         b = MaxDeviation * (wallData[layer][3] + wallData[layer][2]) / (wallData[layer][3] - wallData[layer][2])
         sigma = a * pos[0] + b
@@ -47,7 +46,6 @@ def ProbabilityAltHeterogeneousTransmission(thicknessWall,  numberPoints, wallDa
 
             # echantillonage du transport kernel
             randompoint = random.uniform(0, 1)
-
             pos[i][0] = RandomTransportSampling(pos[i], direction[i], wallData, randompoint)
 
             if not Killed:
@@ -138,17 +136,18 @@ def ScattAndCaptCrossSection(pos, wallData):
 
 
 
+thicknessWall = 0.2
+numberPoints = 1000
+wallData = [[67, 1, 0, 0.1],[42, 3, 0.1, thicknessWall]]
+WeightThreshold = 0
+near_boundary_margin = 0
+split_factor = 0
+a = 0
+for j in range(100):
+    print(j)
+    numberPointsTransmitted, numberPointsBackScattered, finalweight = ProbabilityAltHeterogeneousTransmission(thicknessWall,  numberPoints, wallData, WeightThreshold, near_boundary_margin, split_factor)
+    a += numberPointsTransmitted/numberPoints
+print(a/100)
 
-
-
-
-
-wallData = [[67, 1, 0, 0.1]]
-pos = [0.05, 0]
-
-sigma = StandardDeviation(pos, wallData)
-mu = meanValue(pos, wallData, 0)
-etha = np.random.normal(mu, sigma)
-print(etha)
 
 

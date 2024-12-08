@@ -85,7 +85,7 @@ wallData = [[67, 1, 0, 0.1],[42, 3, 0.1, thicknessWall]]
 WeightThreshold = 0
 near_boundary_margin = 0
 split_factor = 0
-numberPoints = 10000
+numberPoints = 1000
 a = 0
 b = 0
 

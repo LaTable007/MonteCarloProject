@@ -2,18 +2,19 @@ from CommonFunctions import *
 import matplotlib.pyplot as plt
 
 
-TotalCrossSection = 68
+TotalCrossSection = [0.60, 0.50, 0.40, 0.30]
+rng = 100
 
 
 def ScattAbsorpRatio(TotalCrossSection, ThicknessWall):
     TransProb = []
     VarianceData = []
-    ratio = 0
-    numberPoints = 10000
-    for _ in range(99):
-        ratio += 1
-        ACrossSection = TotalCrossSection/(ratio + 1)
-        SCrossSection = TotalCrossSection - ACrossSection
+    numberPoints = 100000
+    for i in range(rng):
+        ratio = 10**(-2 + 0.04*(i+1))
+        print(i)
+        SCrossSection = TotalCrossSection/(ratio + 1)
+        ACrossSection = TotalCrossSection - SCrossSection
         NbPtsTransmitted, NbPtsBackScattered, FinalPosition = ProbabilityTransmission(ThicknessWall, ACrossSection,
                                                                                       SCrossSection, numberPoints)
         TransProb.append(NbPtsTransmitted/numberPoints)
@@ -25,21 +26,29 @@ def ScattAbsorpRatio(TotalCrossSection, ThicknessWall):
     return TransProb, VarianceData
 
 
-Thickness = 0.05
 TransProb = []
 VarDat = []
 
-fig, axs = plt.subplots(1, 1)
+fig, axs = plt.subplots(2, 2,figsize = (18, 11))
+
+fig.suptitle("probability transmission in function of the Absorption/scattering ratio")
 
 
-for i in range(5):
-    Thickness += 0.05
-    TrsProb, var = ScattAbsorpRatio(TotalCrossSection, Thickness)
-    TransProb.append(TrsProb)
-    VarDat.append(var)
-    axs.plot([0.01 * (i + 1) for i in range(99)], TransProb[i], label = f"{Thickness:.2f}")
-    print(i)
-    axs.legend()
+for ax, tcs in zip(axs.flat, TotalCrossSection):
+    Thickness = 0
+    print("AAAAAA")
+    ax.set_xscale("log")
+    ax.set_title(f"Total cross section ={tcs:.2f} [1/cm] ")
+    ax.set_xlabel("Absorption/scattering ratio")
+    ax.set_ylabel("probability transmission")
+    for i in range(4):
+        Thickness += 2.5
+        TrsProb, var = ScattAbsorpRatio(tcs, Thickness)
+        TransProb.append(TrsProb)
+        VarDat.append(var)
+        ax.plot([10**(-2 + 0.04*(i+1)) for i in range(rng)], TransProb[i], label = f"{Thickness:.2f} cm")
+        print(i)
+        ax.legend()
 
 
 

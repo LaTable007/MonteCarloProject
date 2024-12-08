@@ -6,10 +6,20 @@ import matplotlib.pyplot as plt
 
 
 
-def TransportSampling(TotalCrossSection, randompoint):
+def RussianRoulette(weight, WeightThreshold):
+    Killed = False
+    if weight <= WeightThreshold:
+        ethaThreshold = random.uniform(0, 1)
+        if ethaThreshold <= WeightThreshold:
+            weight = weight/ WeightThreshold
+        else:
+            Killed = True
+    return Killed, weight
+
+def TransportSampling(TotalCrossSection):
     etha = random.uniform(0, 1)
-    #return -log(etha)/TotalCrossSection
-    return -np.log(randompoint)/TotalCrossSection
+    return -log(etha)/TotalCrossSection
+
 
 def collisionSample(sigmaS, sigmaA):
     etha = random.uniform(0, 1)
@@ -48,7 +58,7 @@ def ProbabilityTransmission(thicknessWall, AbsorpCrossSection, ScatteringCrossSe
         for i in range(len(pos)):
             # echantillonage du transport kernel
             randompoint = random.uniform(0, 1)
-            SampleTransport = TransportSampling(AbsorpCrossSection + ScatteringCrossSection, randompoint)
+            SampleTransport = TransportSampling(AbsorpCrossSection + ScatteringCrossSection)
             pos[i][0] += SampleTransport * direction[i][0]
 
             # On verifie si neutron sort du mur
@@ -80,3 +90,4 @@ def ProbabilityTransmission(thicknessWall, AbsorpCrossSection, ScatteringCrossSe
         pos = npos[:]
         direction = ndirection[:]
     return numberPointsTransmitted, numberPointsBackScattered, finalpos
+
