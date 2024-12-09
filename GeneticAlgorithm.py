@@ -90,26 +90,41 @@ class GeneticAlgorithm():
             mating_pool.append(sortedPopulation[i])
         return mating_pool
 
-    def create_offspring(self, parent1, parent2):
+        
+    def create_offspring(self, parent1, parent2, crossover_type="single"):
         """
-        :param parent1: An instance of the class Individual
-        :param parent2: An instance of the class Individual
-        :return: Two chromosomes/strings created by
-                single-point crossover of the parents'
-                chromosomes
+        Crée deux descendants à partir de deux parents en utilisant
+        le crossover spécifié.
+    
+        :param parent1: Instance de la classe Individual.
+        :param parent2: Instance de la classe Individual.
+        :param crossover_type: Type de crossover ("single" ou "double").
+        :return: Deux chromosomes/strings créés par le crossover.
         """
-        indexCrossover = random.randint(0, len(TARGET_SOLUTION))
         chromosome1, chromosome2 = parent1.get_chromosome(), parent2.get_chromosome()
 
-        offspring1 = chromosome1[:indexCrossover] + chromosome2[indexCrossover:]
-        offspring2 = chromosome2[:indexCrossover] + chromosome1[indexCrossover:]
+        if crossover_type == "single":
+            # Single-point crossover
+            indexCrossover = random.randint(0, len(chromosome1))
+            offspring1 = chromosome1[:indexCrossover] + chromosome2[indexCrossover:]
+            offspring2 = chromosome2[:indexCrossover] + chromosome1[indexCrossover:]
 
-        return (offspring1,offspring2)
-        
+        elif crossover_type == "double":
+            # Double-point crossover
+            point1 = random.randint(0, len(chromosome1) - 2)
+            point2 = random.randint(point1 + 1, len(chromosome1))
+            offspring1 = (
+                chromosome1[:point1] + chromosome2[point1:point2] + chromosome1[point2:]
+            )
+            offspring2 = (
+                chromosome2[:point1] + chromosome1[point1:point2] + chromosome2[point2:]
+            )
+         
+        return (offspring1, offspring2)
     
     def run_genetic_algorithm(self, seed, 
                               tol = 0.0,
-                              display = True, mating_pool_size_ratio=0.5):
+                              display = True, mating_pool_size_ratio=0.5, crossover_type="single"):
         """
         :param seed: An integer to set the random seed
         :param tol: A tolerance on the fitness function
@@ -151,7 +166,7 @@ class GeneticAlgorithm():
                     parent2 = random.choice(mating_pool)
 
                     # 4.2 Make them reproduce 
-                    offspring1, offspring2 = self.create_offspring(parent1, parent2)
+                    offspring1, offspring2 = self.create_offspring(parent1, parent2, crossover_type)
 
                     # 4.3 Mutate the offsprings
                     offspring1 = self.mutation(offspring1)
@@ -176,14 +191,14 @@ class GeneticAlgorithm():
 
 os.system('mkdir -p plots')
 
+# Liste des seeds
+num_seeds = 1
+seeds = list(range(num_seeds))
+
 # Liste des tailles de population à tester
 population_sizes = [10, 20, 30, 40, 50, 60, 70 , 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 generations_needed = []
 execution_times = []
-
-# Liste des seeds
-num_seeds = 40
-seeds = list(range(num_seeds))
 
 # Tester chaque taille de population
 for pop_size in population_sizes:
@@ -411,4 +426,66 @@ fig.suptitle("Impact du taux d'élitisme sur la convergence et le temps d'exécu
 fig.tight_layout()
 plt.grid(True, which='both', linestyle='--', alpha=0.5)
 plt.savefig('plots/elitism_rate_{}_{}_seeds.png'.format(TARGET_SOLUTION, num_seeds))
+
+
+
+# Comparaison entre simple et double crossover
+crossover_types = ["single", "double"]
+generations_needed_crossover = {ctype: [] for ctype in crossover_types}
+execution_times_crossover = {ctype: [] for ctype in crossover_types}
+
+# Tester chaque méthode de crossover
+for ctype in crossover_types:
+    for pop_size in population_sizes:
+        generations_accumulated = []
+        execution_times_accumulated = []
+
+        for seed in seeds:
+            ga = GeneticAlgorithm(pop_size=pop_size)
+
+            # Mesurer le temps d'exécution
+            start_time = time.time()
+            generations, fitness, chromosome = ga.run_genetic_algorithm(
+                seed=seed, 
+                tol=len(TARGET_SOLUTION), 
+                display=False, 
+                mating_pool_size_ratio=0.5,
+                crossover_type=ctype  # Spécifier le type de crossover
+            )
+            end_time = time.time()
+            
+            generations_accumulated.append(generations)
+            execution_times_accumulated.append(end_time - start_time)
+        
+        # Moyenne sur les seeds
+        avg_generations = sum(generations_accumulated) / len(seeds)
+        avg_execution_time = sum(execution_times_accumulated) / len(seeds)
+        
+        generations_needed_crossover[ctype].append(avg_generations)
+        execution_times_crossover[ctype].append(avg_execution_time)
+
+# Tracer les graphiques comparatifs
+fig, ax1 = plt.subplots(figsize=(10, 6))
+
+# Nombre de générations
+for ctype in crossover_types:
+    ax1.plot(population_sizes, generations_needed_crossover[ctype], marker='o', linestyle='-', label=f"Generations ({ctype})")
+
+ax1.set_xlabel("Taille de la population")
+ax1.set_ylabel("Nombre de générations nécessaires")
+ax1.legend(loc="upper left")
+
+# Temps d'exécution
+ax2 = ax1.twinx()
+for ctype in crossover_types:
+    ax2.plot(population_sizes, execution_times_crossover[ctype], marker='o', linestyle='--', label=f"Temps ({ctype})")
+
+ax2.set_ylabel("Temps d'exécution (s)")
+ax2.legend(loc="upper right")
+
+# Titre et légendes
+fig.suptitle("Comparaison des méthodes de crossover : simple vs double")
+fig.tight_layout()
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.savefig('plots/population_comparison_single_double_{}_{}_seeds.png'.format(TARGET_SOLUTION, num_seeds))
 
