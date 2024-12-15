@@ -21,7 +21,6 @@ A = [[-Lambda_1, 0, 0, Lambda_1, 0, 0], [Mu, -Mu - Lambda, 0, 0, Lambda_1, 0],
      [0, 0, 0, Mu, -Mu - Lambda, Lambda], [0, 0, Mu_1, 0, 2 * Mu, -Mu_1 - 2 * Mu]]
 failed_state = [0, 0, 0]
 NumberSim = 100000
-print("AAAAAA")
 
 
 def SejournTimeSample(StateInd):
@@ -60,7 +59,7 @@ def Unreliability(numberSim, Tmiss):
             time += SejournTimeSample(stateInd)
             if time >= Tmiss: break
             stateInd = NewStateSample(stateInd)
-            print(stateInd)
+            #print(stateInd)
             if stateInd == 5 and reliable:
                 unreliability_list.append(1)
                 Reliable = False
@@ -109,6 +108,7 @@ for Tmiss in Tmiss_values:
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Total execution time: {elapsed_time:.2f} seconds")
+
 
 
 # Création des plots
