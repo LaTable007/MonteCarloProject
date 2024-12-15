@@ -26,23 +26,6 @@ def SejournTimeSample(StateInd):
     return -np.log(etha) / np.abs(A[StateInd][StateInd])
 
 
-def NewStateSampleWithBias(StateInd, bias_factors):
-    etha = np.random.uniform(0, 1)
-    P0 = 0
-    P1 = 0
-    state = 0
-    for i in range(len(A)):
-        if i == StateInd:
-            continue
-        # Apply the bias factor to the transition probability
-        adjusted_rate = A[StateInd][i] * bias_factors[i]
-        P1 += adjusted_rate / np.abs(A[StateInd][StateInd])
-        if P0 <= etha < P1:
-            state = i
-            break
-        P0 += adjusted_rate / np.abs(A[StateInd][StateInd])
-    return state
-
 def NewStateSample(StateInd):
     etha = np.random.uniform(0, 1)
     P0 = 0
@@ -57,10 +40,56 @@ def NewStateSample(StateInd):
         P0 += A[StateInd][i] / np.abs(A[StateInd][StateInd])
     return state
 
+def Unreliability(numberSim, Tmiss):
+    unreliability_list = []
+    unavailability_list = []
 
+    # on va faire un nombre n fois l'evolution du systeme
+    for _ in range(numberSim):
+        # etat initial du systeme : la unit 1 operationel (1), les 2 autres en cold stand-by (2)
+        time = 0
+        stateInd = 0
+        reliable = True
+
+        while time <= Tmiss:
+            # sample de la durée pendant laquel il n'y a pas d'evolution du système
+            time += SejournTimeSample(stateInd)
+            if time >= Tmiss: break
+            stateInd = NewStateSample(stateInd)
+            #print(stateInd)
+            if stateInd == 5 and reliable:
+                unreliability_list.append(1)
+                Reliable = False
+
+        if stateInd == 5:
+            unavailability_list.append(1)
+        else:
+            unavailability_list.append(0)
+        if reliable:
+            unreliability_list.append(0)
+
+    return np.array(unreliability_list), np.array(unavailability_list)
+
+def NewStateSampleWithBias(StateInd, bias_factors):
+    etha = np.random.uniform(0, 1)
+    P0 = 0
+    P1 = 0
+    state = 0
+    for i in range(len(A)):
+        if i == StateInd:
+            continue
+        # On multiplie par le bias factor
+        adjusted_rate = A[StateInd][i] * bias_factors[i]
+        P1 += adjusted_rate / np.abs(A[StateInd][StateInd])
+        if P0 <= etha < P1:
+            state = i
+            break
+        P0 += adjusted_rate / np.abs(A[StateInd][StateInd])
+    return state
 
 def UnreliabilityWithImportanceSampling(numberSim, Tmiss):
     bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Biais plus important pour états failed
+    #bias_factors  = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     unreliability_list = []
     unavailability_list = []
     weights = []
@@ -96,52 +125,22 @@ def UnreliabilityWithImportanceSampling(numberSim, Tmiss):
 
     return np.array(unreliability_list), np.array(unavailability_list), np.array(weights)
 
-def Unreliability(numberSim, Tmiss):
-    unreliability_list = []
-    unavailability_list = []
-
-    # on va faire un nombre n fois l'evolution du systeme
-    for _ in range(numberSim):
-        # etat initial du systeme : la unit 1 operationel (1), les 2 autres en cold stand-by (2)
-        time = 0
-        stateInd = 0
-        reliable = True
-
-        while time <= Tmiss:
-            # sample de la durée pendant laquel il n'y a pas d'evolution du système
-            time += SejournTimeSample(stateInd)
-            if time >= Tmiss: break
-            stateInd = NewStateSample(stateInd)
-            #print(stateInd)
-            if stateInd == 5 and reliable:
-                unreliability_list.append(1)
-                Reliable = False
-
-        if stateInd == 5:
-            unavailability_list.append(1)
-        else:
-            unavailability_list.append(0)
-        if reliable:
-            unreliability_list.append(0)
-
-    return np.array(unreliability_list), np.array(unavailability_list)
-
 
 def compute_accuracy_metrics(values, weights=None):
     if weights is None:
-        # Case with no importance sampling (equal weights)
+        # Cas sans importance sampling
         weights = np.ones_like(values)
 
-    # Weighted mean
+    # Moyenne pondérée
     weighted_mean = np.sum(values * weights) / np.sum(weights)
 
-    # Weighted variance
+    # Variance pondérée
     weighted_variance = np.sum(weights * (values - weighted_mean) ** 2) / np.sum(weights)
 
-    # Standard error
+    # Erreur standard
     SE = np.sqrt(weighted_variance / len(values))
 
-    # Confidence interval width (95%)
+    # Interval de confiance (95%)
     CI_width = 2 * 1.96 * SE
 
     # Effective sample size (ESS)
@@ -196,6 +195,8 @@ for Tmiss in Tmiss_values:
     # Calcule des mesures de précision (avec "importance sampling")
     metrics = compute_accuracy_metrics(u_reliable, weights)
     metrics_list.append(metrics)
+
+    #Cas standard (sans "importance sampling")
 
     u_reliable_v, u_available_v = Unreliability(NumberSim, Tmiss)
 
@@ -266,19 +267,12 @@ axes[1, 0].legend()
 
 
 # Plot de l'Unreliability et Unavailability vs Tmiss
-axes[1, 1].plot(Tmiss_values, unreliability_mean, label="Unreliability (Importance Sampling)", color='blue')
-axes[1, 1].fill_between(Tmiss_values, np.array(unreliability_mean) - np.array(unreliability_CI),
-                         np.array(unreliability_mean) + np.array(unreliability_CI), color='blue', alpha=0.3)
-axes[1, 1].plot(Tmiss_values, unavailability_mean, label="Unavailability (Importance Sampling)", color='red')
-axes[1, 1].fill_between(Tmiss_values, np.array(unavailability_mean) - np.array(unavailability_CI),
-                         np.array(unavailability_mean) + np.array(unavailability_CI), color='red', alpha=0.3)
-
-axes[1, 1].plot(Tmiss_values, unreliability_v_mean, label="Unreliability", color='purple')
+axes[1, 1].plot(Tmiss_values, unreliability_v_mean, label="Unreliability", color='blue')
 axes[1, 1].fill_between(Tmiss_values, np.array(unreliability_v_mean) - np.array(unreliability_v_CI),
-                         np.array(unreliability_v_mean) + np.array(unreliability_v_CI), color='purple', alpha=0.3)
-axes[1, 1].plot(Tmiss_values, unavailability_v_mean, label="Unavailability", color='orange')
+                         np.array(unreliability_v_mean) + np.array(unreliability_v_CI), color='blue', alpha=0.3)
+axes[1, 1].plot(Tmiss_values, unavailability_v_mean, label="Unavailability", color='red')
 axes[1, 1].fill_between(Tmiss_values, np.array(unavailability_v_mean) - np.array(unavailability_v_CI),
-                         np.array(unavailability_v_mean) + np.array(unavailability_v_CI), color='orange', alpha=0.3)
+                         np.array(unavailability_v_mean) + np.array(unavailability_v_CI), color='red', alpha=0.3)
 
 
 axes[1, 1].set_title("Evolution of Unreliability and Unavailability with Tmiss")
