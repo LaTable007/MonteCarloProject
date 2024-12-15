@@ -44,14 +44,15 @@ def NewStateSample(StateInd):
 
 
 def Unreliability(numberSim, Tmiss):
-    numberUnreliableStates = 0
-    numberUnavailableStates = 0
+    unreliability_list = []
+    unavailability_list = []
+
     # on va faire un nombre n fois l'evolution du systeme
-    for i in range(numberSim):
+    for _ in range(numberSim):
         # etat initial du systeme : la unit 1 operationel (1), les 2 autres en cold stand-by (2)
         time = 0
         stateInd = 0
-        Reliable = True
+        reliable = True
 
         while time <= Tmiss:
             # sample de la durée pendant laquel il n'y a pas d'evolution du système
@@ -59,30 +60,58 @@ def Unreliability(numberSim, Tmiss):
             if time >= Tmiss: break
             stateInd = NewStateSample(stateInd)
             print(stateInd)
-            if stateInd == 5 and Reliable:
-                numberUnreliableStates += 1
+            if stateInd == 5 and reliable:
+                unreliability_list.append(1)
                 Reliable = False
 
         if stateInd == 5:
-            numberUnavailableStates += 1
-    return numberUnreliableStates, numberUnavailableStates
+            unavailability_list.append(1)
+        else:
+            unavailability_list.append(0)
+        if reliable:
+            unreliability_list.append(0)
+
+    return np.array(unreliability_list), np.array(unavailability_list)
 
 
 # Vecteurs pour les différents Tmiss et résultats
 Tmiss_values = np.linspace(0.1, 10000, 50)
-unreliability_values = []
-unavailability_values = []
+unreliability_mean = []
+unreliability_CI = []
+unavailability_mean = []
+unavailability_CI = []
 
 for Tmiss in Tmiss_values:
     #print(Tmiss)
     u_reliable, u_available = Unreliability(NumberSim, Tmiss)
-    unreliability_values.append(u_reliable / NumberSim)
-    unavailability_values.append(u_available / NumberSim)
+
+    # Calcule la moyenne et l'interval de confiance pour l'unreliability
+    mean_reliable = np.mean(u_reliable)
+    variance_reliable = np.var(u_reliable)
+    SE_reliable = np.sqrt(variance_reliable / NumberSim)
+    CI_reliable = 1.96 * SE_reliable
+
+    # Calcule la moyenne et l'interval de confiance pour l'unavailibility
+    mean_available = np.mean(u_available)
+    variance_available = np.var(u_available)
+    SE_available = np.sqrt(variance_available / NumberSim)
+    CI_available = 1.96 * SE_available
+
+    unreliability_mean.append(mean_reliable)
+    unreliability_CI.append(CI_reliable)
+    unavailability_mean.append(mean_available)
+    unavailability_CI.append(CI_available)
+
 
 # Création des plots
-plt.figure(figsize=(10, 6))
-plt.plot(Tmiss_values, unreliability_values, label="Unreliability", color='blue')
-plt.plot(Tmiss_values, unavailability_values, label="Unavailability", color='red')
+plt.figure(figsize=(12, 6))
+plt.plot(Tmiss_values, unreliability_mean, label="Unreliability", color='blue')
+plt.fill_between(Tmiss_values, np.array(unreliability_mean) - np.array(unreliability_CI),
+                 np.array(unreliability_mean) + np.array(unreliability_CI), color='blue', alpha=0.3)
+
+plt.plot(Tmiss_values, unavailability_mean, label="Unavailability", color='red')
+plt.fill_between(Tmiss_values, np.array(unavailability_mean) - np.array(unavailability_CI),
+                 np.array(unavailability_mean) + np.array(unavailability_CI), color='red', alpha=0.3)
 plt.title("Evolution of Unreliability and Unavailability with Tmiss")
 plt.xlabel("Tmiss")
 plt.ylabel("Probability")
