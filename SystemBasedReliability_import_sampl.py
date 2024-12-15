@@ -11,7 +11,9 @@ Mu = 0.0001
 Mu_1 = 0.0001
 Tmiss = 1
 
+# 1 = operating, 0 = failed, 2 = stand-by
 possible_states = [[1, 2, 2], [0, 1, 2], [0, 0, 1], [0, 0, 0], [1, 2, 0], [1, 0, 0]]
+# on garde l'ordre dans choisi dans possible states pour donner un numero à chauqe état pour pouvoir les identifier dans le code
 A = [[-Lambda_1, 0, 0, Lambda_1, 0, 0], [Mu, -Mu - Lambda, 0, 0, Lambda_1, 0],
      [0, 2 * Mu, -2 * Mu - Lambda_1, 0, 0, Lambda_1], [Mu_1, 0, 0, -Mu_1 - Lambda, Lambda, 0],
      [0, 0, 0, Mu, -Mu - Lambda, Lambda], [0, 0, Mu_1, 0, 2 * Mu, -Mu_1 - 2 * Mu]]
@@ -58,7 +60,7 @@ def NewStateSample(StateInd):
 
 
 def UnreliabilityWithImportanceSampling(numberSim, Tmiss):
-    bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Bias higher for failure states
+    bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Biais plus important pour états failed
     unreliability_list = []
     unavailability_list = []
     weights = []
@@ -75,7 +77,7 @@ def UnreliabilityWithImportanceSampling(numberSim, Tmiss):
                 break
 
             new_state = NewStateSampleWithBias(stateInd, bias_factors)
-            # Calculate weight correction factor
+            # Calcule le facteur de correction pour le poids
             weight *= A[stateInd][new_state] / (A[stateInd][new_state] * bias_factors[new_state])
             stateInd = new_state
 
@@ -125,21 +127,24 @@ def Unreliability(numberSim, Tmiss):
     return np.array(unreliability_list), np.array(unavailability_list)
 
 
-def compute_accuracy_metrics(values, weights):
-    """
-    Compute accuracy metrics for the simulation results.
+def compute_accuracy_metrics(values, weights=None):
+    if weights is None:
+        # Case with no importance sampling (equal weights)
+        weights = np.ones_like(values)
 
-    Parameters:
-    values (np.array): Simulation results (e.g., unreliability/unavailability).
-    weights (np.array): Corresponding weights for the results.
-
-    Returns:
-    dict: Accuracy metrics including SE, CI Width, and ESS.
-    """
+    # Weighted mean
     weighted_mean = np.sum(values * weights) / np.sum(weights)
+
+    # Weighted variance
     weighted_variance = np.sum(weights * (values - weighted_mean) ** 2) / np.sum(weights)
+
+    # Standard error
     SE = np.sqrt(weighted_variance / len(values))
-    CI_width = 2 * 1.96 * SE  # 95% confidence interval
+
+    # Confidence interval width (95%)
+    CI_width = 2 * 1.96 * SE
+
+    # Effective sample size (ESS)
     ESS = (np.sum(weights) ** 2) / np.sum(weights ** 2)
 
     return {
@@ -151,32 +156,33 @@ def compute_accuracy_metrics(values, weights):
     }
 
 
-# Measure execution time
+#Mesure du temps d'execution
 start_time = time.time()
 
-# Vectors for Tmiss and results
+# Vecteurs pour les différents Tmiss et résultats
 Tmiss_values = np.linspace(0.1, 10000, 50)
 unreliability_mean = []
 unreliability_CI = []
 unavailability_mean = []
 unavailability_CI = []
-metrics_list = []  # Store accuracy metrics for each Tmiss
+metrics_list = []  # Mesures de précision
 
 unreliability_v_mean = []
 unreliability_v_CI = []
 unavailability_v_mean = []
 unavailability_v_CI = []
+metrics_list_v = []  # Mesures de précision
 
 for Tmiss in Tmiss_values:
     u_reliable, u_available, weights = UnreliabilityWithImportanceSampling(NumberSim, Tmiss)
 
-    # Weighted mean and variance for unreliability
+    # Calcule la moyenne et l'interval de confiance pour l'unreliability
     mean_reliable = np.sum(u_reliable) / np.sum(weights)
     variance_reliable = np.var(u_reliable / weights)
     SE_reliable = np.sqrt(variance_reliable / NumberSim)
     CI_reliable = 1.96 * SE_reliable
 
-    # Weighted mean and variance for unavailability
+    # Calcule la moyenne et l'interval de confiance pour l'unavailibility
     mean_available = np.sum(u_available) / np.sum(weights)
     variance_available = np.var(u_available / weights)
     SE_available = np.sqrt(variance_available / NumberSim)
@@ -186,6 +192,10 @@ for Tmiss in Tmiss_values:
     unreliability_CI.append(CI_reliable)
     unavailability_mean.append(mean_available)
     unavailability_CI.append(CI_available)
+
+    # Calcule des mesures de précision (avec "importance sampling")
+    metrics = compute_accuracy_metrics(u_reliable, weights)
+    metrics_list.append(metrics)
 
     u_reliable_v, u_available_v = Unreliability(NumberSim, Tmiss)
 
@@ -206,80 +216,77 @@ for Tmiss in Tmiss_values:
     unavailability_v_mean.append(mean_available_v)
     unavailability_v_CI.append(CI_available_v)
 
-    # Compute accuracy metrics
-    metrics = compute_accuracy_metrics(u_reliable, weights)
-    metrics_list.append(metrics)
+    # Calcule des mesures de précision cas standard
+    metrics_v = compute_accuracy_metrics(u_reliable_v)
+    metrics_list_v.append(metrics_v)
 
 end_time = time.time()
 
-# Execution time
+#Temps d'éxecution
 elapsed_time = end_time - start_time
 print(f"Total execution time with importance sampling: {elapsed_time:} seconds")
 
-# Extract metrics for plotting
 SEs = [metrics["Standard Error"] for metrics in metrics_list]
 CI_widths = [metrics["CI Width"] for metrics in metrics_list]
 ESS_values = [metrics["Effective Sample Size"] for metrics in metrics_list]
 
-SEs = [metrics["Standard Error"] for metrics in metrics_list]
-CI_widths = [metrics["CI Width"] for metrics in metrics_list]
-ESS_values = [metrics["Effective Sample Size"] for metrics in metrics_list]
+SEs_v = [metrics["Standard Error"] for metrics in metrics_list_v]
+CI_widths_v = [metrics["CI Width"] for metrics in metrics_list_v]
+ESS_values_v = [metrics["Effective Sample Size"] for metrics in metrics_list_v]
 
-# Define the figure with subplots
+
 fig, axes = plt.subplots(2, 2, figsize=(16, 12))  # 2 rows, 2 columns
 
-# Plot Standard Error vs Tmiss
-axes[0, 0].plot(Tmiss_values, SEs, label="Standard Error (SE)", color='green')
+# Plot de l'erreur standard vs Tmiss
+axes[0, 0].plot(Tmiss_values, SEs, label="Standard Error (SE) (Importance Sampling)", color='blue')
+axes[0, 0].plot(Tmiss_values, SEs_v, label="Standard Error (SE)", color='purple')
 axes[0, 0].set_title("Standard Error vs Tmiss")
 axes[0, 0].set_xlabel("Tmiss")
 axes[0, 0].set_ylabel("Standard Error")
 axes[0, 0].grid()
 axes[0, 0].legend()
 
-# Plot Confidence Interval Width vs Tmiss
-axes[0, 1].plot(Tmiss_values, CI_widths, label="Confidence Interval Width", color='purple')
+# Plot de l'interval de confiance vs Tmiss
+axes[0, 1].plot(Tmiss_values, CI_widths, label="Confidence Interval Width (Importance Sampling)", color='blue')
+axes[0, 1].plot(Tmiss_values, CI_widths_v, label="Confidence Interval Width", color='purple')
 axes[0, 1].set_title("Confidence Interval Width vs Tmiss")
 axes[0, 1].set_xlabel("Tmiss")
 axes[0, 1].set_ylabel("CI Width")
 axes[0, 1].grid()
 axes[0, 1].legend()
 
-# Plot Effective Sample Size vs Tmiss
-axes[1, 0].plot(Tmiss_values, ESS_values, label="Effective Sample Size (ESS)", color='orange')
+# Plot de l'EES vs Tmiss
+axes[1, 0].plot(Tmiss_values, ESS_values, label="Effective Sample Size (ESS) (Importance Sampling)", color='blue')
+axes[1, 0].plot(Tmiss_values, ESS_values_v, label="Effective Sample Size (ESS)", color='purple')
 axes[1, 0].set_title("Effective Sample Size vs Tmiss")
 axes[1, 0].set_xlabel("Tmiss")
 axes[1, 0].set_ylabel("ESS")
 axes[1, 0].grid()
 axes[1, 0].legend()
 
-# Plot Unreliability and Unavailability with CI vs Tmiss
+
+# Plot de l'Unreliability et Unavailability vs Tmiss
 axes[1, 1].plot(Tmiss_values, unreliability_mean, label="Unreliability (Importance Sampling)", color='blue')
 axes[1, 1].fill_between(Tmiss_values, np.array(unreliability_mean) - np.array(unreliability_CI),
                          np.array(unreliability_mean) + np.array(unreliability_CI), color='blue', alpha=0.3)
 axes[1, 1].plot(Tmiss_values, unavailability_mean, label="Unavailability (Importance Sampling)", color='red')
 axes[1, 1].fill_between(Tmiss_values, np.array(unavailability_mean) - np.array(unavailability_CI),
                          np.array(unavailability_mean) + np.array(unavailability_CI), color='red', alpha=0.3)
-axes[1, 1].set_title("Evolution of Unreliability and Unavailability with Tmiss")
-axes[1, 1].set_xlabel("Tmiss")
-axes[1, 1].set_ylabel("Probability")
-axes[1, 1].grid()
-axes[1, 1].legend()
 
-
-axes[1, 1].plot(Tmiss_values, unreliability_v_mean, label="Unreliability (Importance Sampling)", color='purple')
+axes[1, 1].plot(Tmiss_values, unreliability_v_mean, label="Unreliability", color='purple')
 axes[1, 1].fill_between(Tmiss_values, np.array(unreliability_v_mean) - np.array(unreliability_v_CI),
                          np.array(unreliability_v_mean) + np.array(unreliability_v_CI), color='purple', alpha=0.3)
-axes[1, 1].plot(Tmiss_values, unavailability_v_mean, label="Unavailability (Importance Sampling)", color='orange')
+axes[1, 1].plot(Tmiss_values, unavailability_v_mean, label="Unavailability", color='orange')
 axes[1, 1].fill_between(Tmiss_values, np.array(unavailability_v_mean) - np.array(unavailability_v_CI),
                          np.array(unavailability_v_mean) + np.array(unavailability_v_CI), color='orange', alpha=0.3)
+
+
 axes[1, 1].set_title("Evolution of Unreliability and Unavailability with Tmiss")
 axes[1, 1].set_xlabel("Tmiss")
 axes[1, 1].set_ylabel("Probability")
 axes[1, 1].grid()
 axes[1, 1].legend()
 
-
-# Adjust layout for better spacing
 plt.tight_layout()
 plt.show()
 
