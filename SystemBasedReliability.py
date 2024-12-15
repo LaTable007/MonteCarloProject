@@ -2,6 +2,7 @@
 # en system based-approach
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 seed = 1
 np.random.seed(seed)
@@ -31,7 +32,7 @@ def SejournTimeSample(StateInd):
 def NewStateSample(StateInd):
     etha = np.random.uniform(0, 1)
     P0 = 0
-    P1 = 0  # noah repond j'ai fait une connerie hahah
+    P1 = 0
     state = 0
     for i in range(len(A)):
         if i == StateInd: continue
@@ -73,6 +74,8 @@ def Unreliability(numberSim, Tmiss):
 
     return np.array(unreliability_list), np.array(unavailability_list)
 
+#Mesure du temps d'execution
+start_time = time.time()
 
 # Vecteurs pour les différents Tmiss et résultats
 Tmiss_values = np.linspace(0.1, 10000, 50)
@@ -88,8 +91,8 @@ for Tmiss in Tmiss_values:
     # Calcule la moyenne et l'interval de confiance pour l'unreliability
     mean_reliable = np.mean(u_reliable)
     variance_reliable = np.var(u_reliable)
-    SE_reliable = np.sqrt(variance_reliable / NumberSim)
-    CI_reliable = 1.96 * SE_reliable
+    SE_reliable = np.sqrt(variance_reliable / NumberSim) # Erreur standard
+    CI_reliable = 1.96 * SE_reliable #Interval de confiance de 95%
 
     # Calcule la moyenne et l'interval de confiance pour l'unavailibility
     mean_available = np.mean(u_available)
@@ -101,6 +104,11 @@ for Tmiss in Tmiss_values:
     unreliability_CI.append(CI_reliable)
     unavailability_mean.append(mean_available)
     unavailability_CI.append(CI_available)
+
+#Temps d'éxecution
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Total execution time: {elapsed_time:.2f} seconds")
 
 
 # Création des plots
