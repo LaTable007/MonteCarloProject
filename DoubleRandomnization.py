@@ -1,10 +1,11 @@
 import numpy as np
 from HeterogeneousWall import FindLayer
 from CommonFunctions import InitNeutronPop, collisionSample, TransportSampling, RussianRoulette
+from SplitAndRR import ErrorEstimation
 import random
 from math import cos
 
-MaxDeviation = 1
+
 
 def meanValue(pos, wallData, Interaction):
     layer = FindLayer(pos, wallData)
@@ -21,11 +22,6 @@ def StandardDeviation(pos, wallData):
         b = MaxDeviation * (wallData[layer][3] + wallData[layer][2]) / (wallData[layer][3] - wallData[layer][2])
         sigma = a * pos[0] + b
     return sigma
-
-
-
-
-
 
 def ProbabilityAltHeterogeneousTransmission(thicknessWall,  numberPoints, wallData, WeightThreshold, near_boundary_margin, split_factor):
     finalweight = []
@@ -136,17 +132,20 @@ def ScattAndCaptCrossSection(pos, wallData):
 
 
 
-thicknessWall = 0.2
-numberPoints = 1000
-wallData = [[67, 1, 0, 0.1],[42, 3, 0.1, thicknessWall]]
+thicknessWall = 13
+numberPoints = 10000
+wallData = [[0.3, 0.01, 0, 0.5],[0.5, 0.02, 0.5, 3.5],[0.35, 0.01, 3.5, 6], [0.4, 0.015, 6, 9.5], [0.5, 0.02, 9.5, 12.5], [0.3, 0.01, 12.5, 13]]
 WeightThreshold = 0
 near_boundary_margin = 0
 split_factor = 0
 a = 0
+MaxDeviation = 0.
 for j in range(100):
-    print(j)
     numberPointsTransmitted, numberPointsBackScattered, finalweight = ProbabilityAltHeterogeneousTransmission(thicknessWall,  numberPoints, wallData, WeightThreshold, near_boundary_margin, split_factor)
+    var = ErrorEstimation(finalweight, numberPoints, numberPointsTransmitted)
+    print(var)
     a += numberPointsTransmitted/numberPoints
+    #print(numberPointsTransmitted/numberPoints)
 print(a/100)
 
 

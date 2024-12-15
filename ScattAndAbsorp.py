@@ -9,7 +9,7 @@ rng = 100
 def ScattAbsorpRatio(TotalCrossSection, ThicknessWall):
     TransProb = []
     VarianceData = []
-    numberPoints = 100000
+    numberPoints = 10000
     for i in range(rng):
         ratio = 10**(-2 + 0.04*(i+1))
         print(i)
@@ -46,9 +46,10 @@ for ax, tcs in zip(axs.flat, TotalCrossSection):
         TrsProb, var = ScattAbsorpRatio(tcs, Thickness)
         TransProb.append(TrsProb)
         VarDat.append(var)
-        ax.plot([10**(-2 + 0.04*(i+1)) for i in range(rng)], TransProb[i], label = f"{Thickness:.2f} cm")
+        ax.plot([10**(-2 + 0.04*(i+1)) for i in range(rng)], TrsProb, label = f"{Thickness:.2f} cm")
         print(i)
         ax.legend()
+print(TransProb)
 
 
 
