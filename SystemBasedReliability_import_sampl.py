@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-seed = 1
-np.random.seed(seed)
+#seed = 1
+#np.random.seed(seed)
 
 Lambda_1 = 0.0001
 Lambda = 0.0001
@@ -85,11 +85,12 @@ def NewStateSampleWithBias(StateInd, bias_factors):
             state = i
             break
         P0 += adjusted_rate / np.abs(A[StateInd][StateInd])
+    #print(P1)
     return state
 
 def UnreliabilityWithImportanceSampling(numberSim, Tmiss):
-    bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Biais plus important pour états failed
-    #bias_factors  = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    #bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Biais plus important pour états failed
+    bias_factors  = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     unreliability_list = []
     unavailability_list = []
     weights = []
@@ -153,7 +154,6 @@ def compute_accuracy_metrics(values, weights=None):
         "CI Width": CI_width,
         "Effective Sample Size": ESS
     }
-
 
 #Mesure du temps d'execution
 start_time = time.time()

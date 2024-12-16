@@ -34,11 +34,8 @@ def NewStateSample(StateInd):
         times.append(v)
         indices.append(i)
     mint = min(times)
-    #print(times)
-    #print(indices)
-    #print(mint)
+
     ind = times.index(mint)
-    print(ind)
     return indices[ind], times[ind]
 
 
@@ -56,7 +53,6 @@ def Unreliability(numberSim, Tmiss):
             # sample de la durée pendant laquel il n'y a pas d'evolution du système
 
             sInd, t = NewStateSample(stateInd)
-            print(stateInd)
             time += t
             if time >= Tmiss: break
             stateInd = sInd
@@ -75,9 +71,11 @@ unreliability_values = []
 unavailability_values = []
 
 for Tmiss in Tmiss_values:
-    u_reliable, u_available = Unreliability(NumberSim, Tmiss)
+    u_reliable, u_available = Unreliability(NumberSim, 10000)
     unreliability_values.append(u_reliable / NumberSim)
     unavailability_values.append(u_available / NumberSim)
+    print(Tmiss,u_reliable / NumberSim )
+
 
 # Création des plots
 #.figure(figsize=(10, 6))
