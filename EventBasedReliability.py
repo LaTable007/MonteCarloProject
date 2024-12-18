@@ -24,7 +24,7 @@ print("AAAAAA")
 
 
 
-def NewStateSample(StateInd):
+def NewStateSampleEventBased(StateInd):
     times = []
     indices = []
     for i in range(len(A)):
@@ -39,7 +39,7 @@ def NewStateSample(StateInd):
     return indices[ind], times[ind]
 
 
-def Unreliability(numberSim, Tmiss):
+def UnreliabilityEventBased(numberSim, Tmiss):
     numberUnreliableStates = 0
     numberUnavailableStates = 0
     # on va faire un nombre n fois l'evolution du systeme
@@ -51,8 +51,7 @@ def Unreliability(numberSim, Tmiss):
 
         while time <= Tmiss:
             # sample de la durée pendant laquel il n'y a pas d'evolution du système
-
-            sInd, t = NewStateSample(stateInd)
+            sInd, t = NewStateSampleEventBased(stateInd)
             time += t
             if time >= Tmiss: break
             stateInd = sInd
@@ -65,13 +64,15 @@ def Unreliability(numberSim, Tmiss):
     return numberUnreliableStates, numberUnavailableStates
 
 
+
+
 # Vecteurs pour les différents Tmiss et résultats
 Tmiss_values = np.linspace(0.1, 10000, 50)
 unreliability_values = []
 unavailability_values = []
 
 for Tmiss in Tmiss_values:
-    u_reliable, u_available = Unreliability(NumberSim, 10000)
+    u_reliable, u_available = UnreliabilityEventBased(NumberSim, 10000)
     unreliability_values.append(u_reliable / NumberSim)
     unavailability_values.append(u_available / NumberSim)
     print(Tmiss,u_reliable / NumberSim )

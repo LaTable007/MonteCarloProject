@@ -15,9 +15,9 @@ Mu_1 = 0.0001
 Tmiss = 10000
 
 Lambda_Primme = 0.001
-Mu_Primme = 0.001
+Mu_Primme = 0.0001
 Lambda1_Primme = 0.001
-Mu1_Primme = 0.001
+Mu1_Primme = 0.0001
 
 A = [[-Lambda_1, 0, 0, Lambda_1, 0, 0], [Mu, -Mu - Lambda, 0, 0, Lambda_1, 0],
      [0, 2 * Mu, -2 * Mu - Lambda_1, 0, 0, Lambda_1], [Mu_1, 0, 0, -Mu_1 - Lambda, Lambda, 0],
@@ -37,40 +37,13 @@ for numSim in numberSimValues:
     VarianceData.append(VarianceCalculation(int(numSim), numberUnreliableStates))
     NumberUnreliableStates, NumberUnavailableStates, UnreliableWeights, UnavailableWeights = UnreliabilityBias(int(numSim), Tmiss, A, A_Primme)
     NbrUnreliableStates, NbrUnavailableStates, UnreliableWghts, UnavailableWghts = UnreliabilityCompBias(int(numSim), Tmiss, A, A_Primme)
-    VarianceBiasData.append(ErrorEstimation(UnavailableWeights, int(numSim), NumberUnreliableStates))
+    VarianceBiasData.append(ErrorEstimation(UnreliableWeights, int(numSim), NumberUnreliableStates))
     VarianceBiasEventData.append(ErrorEstimation(UnreliableWghts, int(numSim), NbrUnreliableStates))
     print(numSim, numberUnreliableStates/numSim, NumberUnreliableStates/numSim, NbrUnreliableStates/numSim)
 
 plt.figure(figsize=(10, 6))
-plt.plot(numberSimValues, VarianceData, numberSimValues, VarianceBiasData, numberSimValues, VarianceBiasEventData)
+plt.plot(numberSimValues, VarianceData, numberSimValues, VarianceBiasData)
 plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 """
