@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def SejournTimeSample(StateInd, A):
     etha = np.random.uniform(0, 1)
     return -np.log(etha) / np.abs(A[StateInd][StateInd])
@@ -87,7 +88,8 @@ def UnreliabilityBias(numberSim, Tmiss, A, A_Primme):
             #time += t*NegExponential(t, A, stateInd)/NegExponential(t, A_Primme, stateInd)
             t = SejournTimeSample(stateInd, A)
             time += t
-            if time >= Tmiss: break
+            #weight *= NegExponential(t, A, stateInd, stateInd)/NegExponential(t, A_Primme, stateInd, stateInd)
+            if time >= Tmiss : break
             PreviousStateInd = stateInd
             stateInd = NewStateSample(stateInd, A_Primme)
             weight *= (A[PreviousStateInd][stateInd]/A[PreviousStateInd][PreviousStateInd])/(A_Primme[PreviousStateInd][stateInd]/A_Primme[PreviousStateInd][PreviousStateInd])
@@ -174,4 +176,54 @@ def BiasedStateSampleEventBased(StateInd, A, A_Primme):
     ind = times.index(mint)
 
     return indices[ind], times[ind]
+
+
+def UnreliabilityFFSystemBased(numberSim, Tmiss, A):
+    T_bias = 0.2 * Tmiss
+    numberUnreliableStates = 0
+    numberUnavailableStates = 0
+    UnavailableWeights = []
+    UnreliableWeights = []
+    # on va faire un nombre n fois l'evolution du systeme
+    for i in range(numberSim):
+        #print(i)
+        # etat initial du systeme : la unit 1 operationel (1), les 2 autres en cold stand-by (2)
+        time = 0
+        stateInd = 0
+        Reliable = True
+        weight = 1
+
+        while time <= Tmiss:
+            # sample de la durée pendant laquel il n'y a pas d'evolution du système
+            if stateInd != 5 and i > numberSim*0.9:
+                t, wght = SejournSampleTimeBiased(stateInd, A, T_bias)
+                weight *= wght
+            else :
+                t = SejournTimeSample(stateInd, A)
+            time += t
+            if time >= Tmiss : break
+            PreviousStateInd = stateInd
+            stateInd = NewStateSample(stateInd, A)
+            if stateInd == 5 and Reliable:
+                numberUnreliableStates += weight
+                UnreliableWeights.append(weight)
+                print(weight)
+                Reliable = False
+
+        if stateInd == 5:
+            numberUnavailableStates += weight
+            UnavailableWeights.append(weight)
+    return numberUnreliableStates, numberUnavailableStates, UnreliableWeights, UnavailableWeights
+
+
+def SejournSampleTimeBiased(stateInd, A, T):
+    etha = np.random.uniform(0, 1)
+    Wght = 1 - np.exp(-np.abs(A[stateInd][stateInd])*T)
+    #Wght = 1
+    #print(etha*Wght)
+    SampleTime = -np.log(1 - etha*Wght)/np.abs(A[stateInd][stateInd])
+    #SampleTime = -np.log(etha)/np.abs(A[stateInd][stateInd])
+    return SampleTime, Wght
+
+
 
