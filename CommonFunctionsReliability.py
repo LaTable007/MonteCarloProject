@@ -5,6 +5,7 @@ def SejournTimeSample(StateInd, A):
     etha = np.random.uniform(0, 1)
     return -np.log(etha) / np.abs(A[StateInd][StateInd])
 
+
 def NewStateSample(StateInd, A):
     etha = np.random.uniform(0, 1)
     P0 = 0
@@ -18,6 +19,7 @@ def NewStateSample(StateInd, A):
             break
         P0 += A[StateInd][i] / np.abs(A[StateInd][StateInd])
     return state
+
 
 def Unreliability(numberSim, Tmiss, A):
     numberUnreliableStates = 0
@@ -43,8 +45,10 @@ def Unreliability(numberSim, Tmiss, A):
             numberUnavailableStates += 1
     return numberUnreliableStates, numberUnavailableStates
 
+
 def NegExponential(time, A, StateInd, sInd):
     return np.abs(A[StateInd][sInd])*np.exp(-np.abs(A[StateInd][sInd])*time)
+
 
 def UnreliabilityBias(numberSim, Tmiss, A, A_Primme):
     numberUnreliableStates = 0
@@ -89,6 +93,7 @@ def ErrorEstimation(ScatteredWeights, numberPoints, numberPointsTransmitted):
     var = var/numberPoints - (numberPointsTransmitted/numberPoints)**2
     return (var/numberPoints)**(1/2)
 
+
 def VarianceCalculation(TotalNumberNeutrons, TransmittedNeutrons):
     var = TransmittedNeutrons/TotalNumberNeutrons - (TransmittedNeutrons/TotalNumberNeutrons)**2
     return (var/TotalNumberNeutrons)**(1/2)
@@ -123,6 +128,7 @@ def UnreliabilityCompBias(numberSim, Tmiss, A, A_Primme):
             UnavailableWeights.append(weight)
     return numberUnreliableStates, numberUnavailableStates, UnreliableWeights, UnavailableWeights
 
+
 def NewStateSampleEventBased(StateInd, A):
     times = []
     indices = []
@@ -136,6 +142,7 @@ def NewStateSampleEventBased(StateInd, A):
 
     ind = times.index(mint)
     return indices[ind], times[ind]
+
 
 def BiasedStateSampleEventBased(StateInd, A, A_Primme):
     times = []
@@ -151,63 +158,53 @@ def BiasedStateSampleEventBased(StateInd, A, A_Primme):
 
     return indices[ind], times[ind]
 
+
 def UnreliabilityFFSystemBased(numberSim, Tmiss, A):
+    T_bias = 0.2 * Tmiss
     numberUnreliableStates = 0
     numberUnavailableStates = 0
-    UnreliableWeights = []
     UnavailableWeights = []
+    UnreliableWeights = []
     # on va faire un nombre n fois l'evolution du systeme
     for i in range(numberSim):
+        #print(i)
         # etat initial du systeme : la unit 1 operationel (1), les 2 autres en cold stand-by (2)
-        weight = 1
-        T_FF = 1.4*Tmiss
         time = 0
         stateInd = 0
         Reliable = True
-        #print(i)
+        weight = 1
 
         while time <= Tmiss:
             # sample de la durée pendant laquel il n'y a pas d'evolution du système
-            if Reliable:
-                t = SejournSampleTimeBiased(stateInd, A, T_FF)
-                wght = 1 - np.exp(-np.abs(A[stateInd][stateInd])*T_FF)
+            if stateInd != 5 and i > numberSim*0.9:
+                t, wght = SejournSampleTimeBiased(stateInd, A, T_bias)
+                weight *= wght
             else :
                 t = SejournTimeSample(stateInd, A)
-                wght = 1
-            #print(Tmiss - time, wght)
-            weight *= wght
             time += t
-            if time >= Tmiss: break
+            if time >= Tmiss : break
+            PreviousStateInd = stateInd
             stateInd = NewStateSample(stateInd, A)
             if stateInd == 5 and Reliable:
                 numberUnreliableStates += weight
                 UnreliableWeights.append(weight)
-
+                print(weight)
                 Reliable = False
 
         if stateInd == 5:
             numberUnavailableStates += weight
             UnavailableWeights.append(weight)
-
     return numberUnreliableStates, numberUnavailableStates, UnreliableWeights, UnavailableWeights
 
 
 def SejournSampleTimeBiased(stateInd, A, T):
     etha = np.random.uniform(0, 1)
-    wght = 1 - np.exp(-np.abs(A[stateInd][stateInd])*T)
-    SampleTime = -np.log(1 - wght * etha)/np.abs(A[stateInd][stateInd])
-    return SampleTime
-
-def SejournSampleTimeBiased2(stateInd, A, T):
-    etha = np.random.uniform(0, 1)
-    Wght = np.exp(-np.abs(A[stateInd][stateInd])*T)
-    #Wght =
-    print(Wght)
+    Wght = 1 - np.exp(-np.abs(A[stateInd][stateInd])*T)
+    #Wght = 1
+    #print(etha*Wght)
     SampleTime = -np.log(1 - etha*Wght)/np.abs(A[stateInd][stateInd])
     #SampleTime = -np.log(etha)/np.abs(A[stateInd][stateInd])
     return SampleTime, Wght
-
-
 
 
 
