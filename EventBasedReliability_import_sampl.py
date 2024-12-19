@@ -66,7 +66,7 @@ def NewStateSampleImportance(StateInd, matrix):
     ind = times.index(mint)
     return indices[ind], mint
 
-def Unreliability_with_details(numberSim, Tmiss):
+def Unreliability(numberSim, Tmiss):
     unreliable_states = []
     unavailable_states = []
 
@@ -109,57 +109,49 @@ def Unreliability_with_details(numberSim, Tmiss):
     )
 
 
-def Unreliability_with_importance(numberSim, Tmiss, original_matrix, importance_matrix):
-    unreliable_states = []
-    unavailable_states = []
-    weights = []
+def UnreliabilityBias(numberSim, Tmiss, A, A_Prime):
+    """Simulate unreliability and unavailability with bias correction using weights."""
+    numberUnreliableStates = 0
+    numberUnavailableStates = 0
+    UnreliableWeights = []
+    UnavailableWeights = []
 
     for i in range(numberSim):
         time = 0
         stateInd = 0
         Reliable = True
-        unreliable = False
-        unavailable = False
-        weight = 1.0
+        weight = 1
 
         while time <= Tmiss:
-            # sample a partir de la matrice modifiée
-            sInd, t = NewStateSampleImportance(stateInd, importance_matrix)
+            # Sample le temps depuis la matrice A initiale
+            sInd, t = NewStateSampleImportance(stateInd, A)
             time += t
+
             if time >= Tmiss:
                 break
 
-            # Calcule des corrections pour le poids
-            if importance_matrix[stateInd][sInd] != 0:
-                weight *= original_matrix[stateInd][sInd] / importance_matrix[stateInd][sInd]
+            # Calcul correction poids
+            PreviousStateInd = stateInd
+            stateInd = NewStateSampleImportance(stateInd, A_Prime)[0]
+            weight *= (A[PreviousStateInd][stateInd] / A[PreviousStateInd][PreviousStateInd]) / (
+                A_Prime[PreviousStateInd][stateInd] / A_Prime[PreviousStateInd][PreviousStateInd])
 
-            stateInd = sInd
             if stateInd == 5 and Reliable:
-                unreliable = True
+                numberUnreliableStates += weight
+                UnreliableWeights.append(weight)
                 Reliable = False
 
         if stateInd == 5:
-            unavailable = True
-
-        unreliable_states.append(unreliable * weight)
-        unavailable_states.append(unavailable * weight)
-        weights.append(weight)
-
-    # On divise par les poids pour corriger le biais
-    total_weight = np.sum(weights)
-    unreliability = np.sum(unreliable_states) / total_weight
-    unavailability = np.sum(unavailable_states) / total_weight
-
-    # Calculate des variances pondérées pour l'erreur standard
-    unreliability_var = np.sum(weights * (np.array(unreliable_states) / weights - unreliability) ** 2) / total_weight
-    unavailability_var = np.sum(weights * (np.array(unavailable_states) / weights - unavailability) ** 2) / total_weight
+            numberUnavailableStates += weight
+            UnavailableWeights.append(weight)
 
     return (
-        unreliability,
-        unavailability,
-        np.sqrt(unreliability_var / numberSim),  # Erreur standard unreliability
-        np.sqrt(unavailability_var / numberSim)
+        numberUnreliableStates / numberSim,
+        numberUnavailableStates / numberSim,
+        np.std(UnreliableWeights) / np.sqrt(numberSim),  # Erreur standard unreliability
+        np.std(UnavailableWeights) / np.sqrt(numberSim)
     )
+
 
 
 unreliability_values = []
@@ -173,13 +165,13 @@ unreliability_errors_importance = []
 unavailability_errors_importance = []
 
 for Tmiss in Tmiss_values:
-    u_reliable, u_available, u_reliable_err, u_available_err = Unreliability_with_details(NumberSim, Tmiss)
+    u_reliable, u_available, u_reliable_err, u_available_err = Unreliability(NumberSim, Tmiss)
     unreliability_values.append(u_reliable)
     unavailability_values.append(u_available)
     unreliability_errors.append(u_reliable_err)
     unavailability_errors.append(u_available_err)
 
-    u_reliable, u_available, u_reliable_err, u_available_err = Unreliability_with_importance(
+    u_reliable, u_available, u_reliable_err, u_available_err = UnreliabilityBias(
         NumberSim, Tmiss, A, A_importance
     )
     unreliability_values_importance.append(u_reliable)
@@ -192,8 +184,8 @@ fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 # Plot unreliability et unavailability
 axes[0].plot(Tmiss_values, unreliability_values, label="Unreliability", color='blue')
 axes[0].plot(Tmiss_values, unavailability_values, label="Unavailability", color='red')
-axes[0].plot(Tmiss_values, unreliability_values_importance, label="Unreliability", color='purple')
-axes[0].plot(Tmiss_values, unavailability_values_importance, label="Unavailability", color='orange')
+axes[0].plot(Tmiss_values, unreliability_values_importance, label="Unreliability (importance sampling)", color='purple')
+axes[0].plot(Tmiss_values, unavailability_values_importance, label="Unavailability (importance sampling)", color='orange')
 axes[0].set_title("Unreliability and Unavailability vs Tmiss")
 axes[0].set_xlabel("Tmiss")
 axes[0].set_ylabel("Probability")
@@ -201,10 +193,10 @@ axes[0].legend()
 axes[0].grid()
 
 # Plot erreurs standard
-axes[1].plot(Tmiss_values, unreliability_errors, label="Unreliability (importance sampling)", color='blue', linestyle='--')
-axes[1].plot(Tmiss_values, unavailability_errors, label="Unavailability (importance sampling)", color='red', linestyle='--')
-axes[1].plot(Tmiss_values, unreliability_errors_importance, label="Unreliability", color='purple', linestyle='--')
-axes[1].plot(Tmiss_values, unavailability_errors_importance, label="Unavailability", color='orange', linestyle='--')
+axes[1].plot(Tmiss_values, unreliability_errors, label="Unreliability ", color='blue', linestyle='--')
+axes[1].plot(Tmiss_values, unavailability_errors, label="Unavailability", color='red', linestyle='--')
+axes[1].plot(Tmiss_values, unreliability_errors_importance, label="Unreliability (importance sampling)", color='purple', linestyle='--')
+axes[1].plot(Tmiss_values, unavailability_errors_importance, label="Unavailability (importance sampling)", color='orange', linestyle='--')
 axes[1].set_title("Standard Error vs Tmiss")
 axes[1].set_xlabel("Tmiss")
 axes[1].set_ylabel("Standard Error")
