@@ -25,6 +25,8 @@ possible_states = [[1, 2, 2], [0, 1, 2], [0, 0, 1], [0, 0, 0], [1, 2, 0], [1, 0,
 A = [[-Lambda_1, 0, 0, Lambda_1, 0, 0], [Mu, -Mu - Lambda, 0, 0, Lambda_1, 0],
      [0, 2 * Mu, -2 * Mu - Lambda_1, 0, 0, Lambda_1], [Mu_1, 0, 0, -Mu_1 - Lambda, Lambda, 0],
      [0, 0, 0, Mu, -Mu - Lambda, Lambda], [0, 0, Mu_1, 0, 2 * Mu, -Mu_1 - 2 * Mu]]
+
+
 Tmiss = 0
 Tmiss_values = [(i + 1)*100 for i in range(100)]
 unreliabilityData = []
@@ -38,7 +40,6 @@ unavailabiltyFFDataV = []
 
 for j in range(100):
      Tmiss += 100
-     print(Tmiss)
      numberUnreliableStates, numberUnavailableStates = Unreliability(numberSim, Tmiss, A)
      unreliabilityData.append(numberUnreliableStates/numberSim)
      unavailabiltyData.append(numberUnavailableStates/numberSim)

@@ -160,7 +160,7 @@ def BiasedStateSampleEventBased(StateInd, A, A_Primme):
 
 
 def UnreliabilityFFSystemBased(numberSim, Tmiss, A):
-    T_bias = 0.2 * Tmiss
+    T_bias = 1.4 * Tmiss
     numberUnreliableStates = 0
     numberUnavailableStates = 0
     UnavailableWeights = []
@@ -176,7 +176,7 @@ def UnreliabilityFFSystemBased(numberSim, Tmiss, A):
 
         while time <= Tmiss:
             # sample de la durée pendant laquel il n'y a pas d'evolution du système
-            if stateInd != 5 and i > numberSim*0.9:
+            if stateInd != 5:
                 t, wght = SejournSampleTimeBiased(stateInd, A, T_bias)
                 weight *= wght
             else :
@@ -188,7 +188,7 @@ def UnreliabilityFFSystemBased(numberSim, Tmiss, A):
             if stateInd == 5 and Reliable:
                 numberUnreliableStates += weight
                 UnreliableWeights.append(weight)
-                print(weight)
+                #print(weight)
                 Reliable = False
 
         if stateInd == 5:
