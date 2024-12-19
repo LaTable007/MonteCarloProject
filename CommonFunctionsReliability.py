@@ -20,6 +20,25 @@ def NewStateSample(StateInd, A):
     return state
 
 
+def NewStateSampleWithBias(StateInd, bias_factors,A):
+    etha = np.random.uniform(0, 1)
+    P0 = 0
+    P1 = 0
+    state = 0
+    for i in range(len(A)):
+        if i == StateInd:
+            continue
+        # On multiplie par le bias factor
+        adjusted_rate = A[StateInd][i] * bias_factors[i]
+        P1 += adjusted_rate / np.abs(A[StateInd][StateInd])
+        if P0 <= etha < P1:
+            state = i
+            break
+        P0 += adjusted_rate / np.abs(A[StateInd][StateInd])
+    #print(P1)
+    return state
+
+
 def Unreliability(numberSim, Tmiss, A):
     numberUnreliableStates = 0
     numberUnavailableStates = 0

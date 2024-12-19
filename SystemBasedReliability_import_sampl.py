@@ -89,8 +89,8 @@ def NewStateSampleWithBias(StateInd, bias_factors):
     return state
 
 def UnreliabilityWithImportanceSampling(numberSim, Tmiss):
-    #bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Biais plus important pour états failed
-    bias_factors  = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    bias_factors = [1.0, 1.1666666666666665, 1.5, 1.0, 1.3333333333333333, 1.5] # Biais plus important pour états failed
+    #bias_factors  = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     unreliability_list = []
     unavailability_list = []
     weights = []
@@ -274,7 +274,12 @@ axes[1, 1].plot(Tmiss_values, unavailability_v_mean, label="Unavailability", col
 axes[1, 1].fill_between(Tmiss_values, np.array(unavailability_v_mean) - np.array(unavailability_v_CI),
                          np.array(unavailability_v_mean) + np.array(unavailability_v_CI), color='red', alpha=0.3)
 
-
+axes[1, 1].plot(Tmiss_values, unreliability_mean, label="Unreliability", color='blue')
+axes[1, 1].fill_between(Tmiss_values, np.array(unreliability_mean) - np.array(unreliability_CI),
+                         np.array(unreliability_mean) + np.array(unreliability_CI), color='blue', alpha=0.3)
+axes[1, 1].plot(Tmiss_values, unavailability_mean, label="Unavailability", color='red')
+axes[1, 1].fill_between(Tmiss_values, np.array(unavailability_mean) - np.array(unavailability_CI),
+                         np.array(unavailability_mean) + np.array(unavailability_CI), color='red', alpha=0.3)
 axes[1, 1].set_title("Evolution of Unreliability and Unavailability with Tmiss")
 axes[1, 1].set_xlabel("Tmiss")
 axes[1, 1].set_ylabel("Probability")
